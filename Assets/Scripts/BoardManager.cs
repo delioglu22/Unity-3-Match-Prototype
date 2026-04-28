@@ -2,8 +2,16 @@ using UnityEngine;
 
 public class BoardManager : MonoBehaviour
 {
-    [SerializeField] int width;
-    [SerializeField] int height;
+    
+    public static BoardManager Instance { get; private set; }
+
+    private void Awake() 
+    {
+        Instance = this;    
+    }
+
+    [field: SerializeField] public int width { get; private set; }
+    [field: SerializeField] public int height { get; private set; }
     [SerializeField] GameObject[] piecePrefabs;
     
     public Piece[,] board;    
@@ -32,6 +40,71 @@ public class BoardManager : MonoBehaviour
                 }
                 GameObject piece = Instantiate(piecePrefabs[randomIndex], tempPosition, Quaternion.identity);
                 board[i, j] = piece.GetComponent<Piece>();
+                board[i, j].location = new Vector2Int(i,j);
+
+            }
+        }
+    }
+    public void CheckForMatches()
+    {
+        for(int i = 0; i < width; i++)
+        {
+            for(int j = 0; j < height; j++)
+            {
+                Piece currentPiece = board[i,j];
+                if(currentPiece != null)
+                {
+                    if(i < width - 2)
+                    {
+                        Piece right1 = board[i+1, j];
+                        Piece right2 = board[i+2, j];
+                        if(right1 != null && right2 != null)
+                        {
+                            if(currentPiece.myPiece == right1.myPiece && currentPiece.myPiece == right2.myPiece)
+                            {
+                                currentPiece.isMatched = true;
+                                right1.isMatched = true;
+                                right2.isMatched = true;
+                                DestroyMatches();
+                                Debug.Log("DESTROY OBJECTS");
+                            }
+                        }
+                    }
+
+                    if(j < height - 2)
+                    {
+                        Piece up1 = board[i, j+1];
+                        Piece up2 = board[i, j+2];
+                        if(up1 != null && up2 != null)
+                        {
+                            if(currentPiece.myPiece == up1.myPiece && currentPiece.myPiece == up2.myPiece)
+                            {
+                                currentPiece.isMatched = true;
+                                up1.isMatched = true;
+                                up2.isMatched = true;
+                                DestroyMatches();
+                                Debug.Log("DESTROY OBJECTS");
+
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+    public void DestroyMatches()
+    {
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                if (board[i, j] != null && board[i, j].isMatched)
+                {
+                    Destroy(board[i, j].gameObject);
+                    
+                    board[i, j] = null;
+                }
             }
         }
     }

@@ -369,8 +369,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64861891e63c24486b23eb4cecfe0daa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoardManager
-  width: 8
-  height: 8
+  <width>k__BackingField: 8
+  <height>k__BackingField: 8
   piecePrefabs:
   - {fileID: 6654400373445720161, guid: 56437e26a2c554348b5d0e6dad93bc67, type: 3}
   - {fileID: 6276567299853043309, guid: 0c933ab72333a45c2ab4300b63967e05, type: 3}
