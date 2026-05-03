@@ -15,6 +15,8 @@ public class BoardManager : MonoBehaviour
     [SerializeField] GameObject[] piecePrefabs;
     
     public Piece[,] board;    
+    private float xOffset;
+    private float yOffset;
 
 
     void Start()
@@ -24,8 +26,8 @@ public class BoardManager : MonoBehaviour
     }
     void SetUpBoard()
     {
-        var xOffset = (width - 1) / 2f;
-        var yOffset = (height - 1) / 2f;
+        xOffset = (width - 1) / 2f;
+        yOffset = (height - 1) / 2f;
         for(int i = 0; i < width; i++)
         {
             for(int j = 0; j < height; j++)
@@ -47,6 +49,8 @@ public class BoardManager : MonoBehaviour
     }
     public void CheckForMatches()
     {
+        bool matchFound = false;
+
         for(int i = 0; i < width; i++)
         {
             for(int j = 0; j < height; j++)
@@ -65,8 +69,7 @@ public class BoardManager : MonoBehaviour
                                 currentPiece.isMatched = true;
                                 right1.isMatched = true;
                                 right2.isMatched = true;
-                                DestroyMatches();
-                                Debug.Log("DESTROY OBJECTS");
+                                matchFound = true;
                             }
                         }
                     }
@@ -82,15 +85,21 @@ public class BoardManager : MonoBehaviour
                                 currentPiece.isMatched = true;
                                 up1.isMatched = true;
                                 up2.isMatched = true;
-                                DestroyMatches();
-                                Debug.Log("DESTROY OBJECTS");
-
+                                matchFound = true;
                             }
                         }
                     }
-
                 }
             }
+        }
+        if(matchFound == true)
+        {
+            DestroyMatches();
+            ApplyGravity();
+            RefillBoard();
+            Debug.Log("DESTROY OBJECTS");
+
+            CheckForMatches();
         }
     }
     public void DestroyMatches()
@@ -104,6 +113,42 @@ public class BoardManager : MonoBehaviour
                     Destroy(board[i, j].gameObject);
                     
                     board[i, j] = null;
+                }
+            }
+        }
+    }
+    private void ApplyGravity()
+    {
+        for(int i = 0; i < width; i++)
+        {
+            int nullCount = 0;
+            
+            for(int j = 0; j < height; j++)
+            {
+                if(board[i,j] == null) nullCount++;
+                else if(nullCount > 0)
+                {
+                    board[i, j].location.y = board[i, j].location.y - nullCount;
+                    board[i, j - nullCount] = board[i, j];
+                    board[i, j] = null;
+                    board[i, j - nullCount].transform.position = new Vector2(i - xOffset, j - nullCount - yOffset);
+                }
+            }
+        }
+    }
+    private void RefillBoard()
+    {
+        for(int i = 0; i < width; i++)
+        {            
+            for(int j = 0; j < height; j++)
+            {
+                if(board[i, j] == null)
+                {
+                    int randomIndex = Random.Range(0, piecePrefabs.Length);
+                    Vector2 tempPosition = new Vector2(i - xOffset, j - yOffset);
+                    GameObject piece = Instantiate(piecePrefabs[randomIndex], tempPosition, Quaternion.identity);
+                    board[i, j] = piece.GetComponent<Piece>();
+                    board[i, j].location = new Vector2Int(i,j);
                 }
             }
         }
