@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class BoardManager : MonoBehaviour
@@ -94,12 +95,7 @@ public class BoardManager : MonoBehaviour
         }
         if(matchFound == true)
         {
-            DestroyMatches();
-            ApplyGravity();
-            RefillBoard();
-            Debug.Log("DESTROY OBJECTS");
-
-            CheckForMatches();
+            StartCoroutine(ProcessBoardRoutine());
         }
     }
     public void DestroyMatches()
@@ -131,7 +127,7 @@ public class BoardManager : MonoBehaviour
                     board[i, j].location.y = board[i, j].location.y - nullCount;
                     board[i, j - nullCount] = board[i, j];
                     board[i, j] = null;
-                    board[i, j - nullCount].transform.position = new Vector2(i - xOffset, j - nullCount - yOffset);
+                    board[i, j - nullCount].targetPosition = new Vector2(i - xOffset, j - nullCount - yOffset);
                 }
             }
         }
@@ -145,12 +141,28 @@ public class BoardManager : MonoBehaviour
                 if(board[i, j] == null)
                 {
                     int randomIndex = Random.Range(0, piecePrefabs.Length);
-                    Vector2 tempPosition = new Vector2(i - xOffset, j - yOffset);
-                    GameObject piece = Instantiate(piecePrefabs[randomIndex], tempPosition, Quaternion.identity);
+
+                    Vector2 finalPosition = new Vector2(i - xOffset, j - yOffset);
+                    Vector2 spawnPosition = new Vector2(i - xOffset, j - yOffset + 5f);
+
+                    GameObject piece = Instantiate(piecePrefabs[randomIndex], spawnPosition, Quaternion.identity);
+
                     board[i, j] = piece.GetComponent<Piece>();
                     board[i, j].location = new Vector2Int(i,j);
+
+                    board[i, j].targetPosition = finalPosition;
                 }
             }
         }
+    }
+    private IEnumerator ProcessBoardRoutine()
+    {
+        DestroyMatches();
+        yield return new WaitForSeconds(0.3f);
+        ApplyGravity();
+        yield return new WaitForSeconds(0.3f);
+        RefillBoard();
+        yield return new WaitForSeconds(0.3f);
+        CheckForMatches();
     }
 }

@@ -5,6 +5,7 @@ public class Piece : MonoBehaviour
 {
     public Vector2Int location;
     public PieceType myPiece;
+
     public enum PieceType
     {
         Blue,
@@ -16,12 +17,30 @@ public class Piece : MonoBehaviour
         Box,
     }
 
+    [SerializeField] float moveSpeed = 10f;
+
     public bool isMatched = false;
     public float swipeAngle = 0;
     public float swipeResist = 1f;
 
+    public Vector2 targetPosition; 
+
     Vector2 firstTouchPosition;
     Vector2 finalTouchPosition;
+    
+    private void Awake()
+    {
+        targetPosition = transform.position;
+    }
+    
+    private void Update() 
+    {
+        if((Vector2)transform.position != targetPosition)
+        {
+           transform.position = Vector2.Lerp(transform.position, targetPosition, moveSpeed * Time.deltaTime); 
+        }
+    }
+
 
     private void OnMouseDown() 
     {
@@ -55,7 +74,7 @@ public class Piece : MonoBehaviour
         {
             Piece otherPiece = BoardManager.Instance.board[targetX, targetY];
 
-            (transform.position, otherPiece.transform.position) = (otherPiece.transform.position, transform.position);
+            (targetPosition, otherPiece.transform.position) = (otherPiece.transform.position, targetPosition);
 
             (BoardManager.Instance.board[location.x, location.y], BoardManager.Instance.board[otherPiece.location.x, otherPiece.location.y]) = 
             (BoardManager.Instance.board[otherPiece.location.x, otherPiece.location.y], BoardManager.Instance.board[location.x, location.y]);
