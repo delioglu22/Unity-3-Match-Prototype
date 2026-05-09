@@ -44,9 +44,13 @@ public class Piece : MonoBehaviour
 
     private void OnMouseDown() 
     {
+        if(BoardManager.Instance.currentState != BoardManager.GameState.Move) return;
+
         firstTouchPosition = Input.mousePosition;
     }
     private void OnMouseUp() {
+        if(BoardManager.Instance.currentState != BoardManager.GameState.Move) return;
+        
         finalTouchPosition = Input.mousePosition;
         Vector2 direction = finalTouchPosition - firstTouchPosition;
         if(direction.magnitude > swipeResist)
@@ -73,15 +77,15 @@ public class Piece : MonoBehaviour
         if(targetX < BoardManager.Instance.width && targetX >= 0 && targetY < BoardManager.Instance.height && targetY >= 0)
         {
             Piece otherPiece = BoardManager.Instance.board[targetX, targetY];
-
-            (targetPosition, otherPiece.transform.position) = (otherPiece.transform.position, targetPosition);
+            
+            (targetPosition, otherPiece.targetPosition) = (otherPiece.targetPosition, targetPosition);
 
             (BoardManager.Instance.board[location.x, location.y], BoardManager.Instance.board[otherPiece.location.x, otherPiece.location.y]) = 
             (BoardManager.Instance.board[otherPiece.location.x, otherPiece.location.y], BoardManager.Instance.board[location.x, location.y]);
 
             (location, otherPiece.location) = (otherPiece.location, location);
 
-            BoardManager.Instance.CheckForMatches();
+            StartCoroutine(BoardManager.Instance.CheckAndSwapBack(this, otherPiece));
             Debug.Log($"My piece: {myPiece}, Swap piece: {otherPiece.myPiece}");
         }
     }
