@@ -20,6 +20,8 @@ public class Piece : MonoBehaviour
     [SerializeField] float moveSpeed = 10f;
 
     public bool isMatched = false;
+    public bool isHorizontalMatch = false; 
+    public bool isVerticalMatch = false;
     public float swipeAngle = 0;
     public float swipeResist = 1f;
 

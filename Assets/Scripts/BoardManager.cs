@@ -19,10 +19,16 @@ public class BoardManager : MonoBehaviour
 
     private int movesLeft;
 
+    public int currentScore = 0;
+    private int scoreMultiplier = 1;
+    private int baseScoreValue = 10;
+
     private void Awake() 
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        UIManager.Instance.UpdateScore(currentScore);
 
     }
 
@@ -31,6 +37,8 @@ public class BoardManager : MonoBehaviour
     {
         board = new Piece[width, height];
         movesLeft = maxMoves;
+        UIManager.Instance.UpdateMoves(movesLeft);
+
         SetUpBoard();
     }
     void SetUpBoard()
@@ -56,43 +64,32 @@ public class BoardManager : MonoBehaviour
             }
         }
     }
-    public void CheckForMatches()
-    {
-        bool matchFound = false;
-
-        if(HasMatches()) matchFound = true;
-        
-        if(matchFound == true)
-        {
-            StartCoroutine(ProcessBoardRoutine());
-        }
-        else
-        {
-            if(movesLeft <= 0)
-            {
-                currentState = GameState.GameOver;
-                Debug.Log("GAME OVER!");
-            }
-            else
-            {
-                currentState = GameState.Move;
-            }
-        }
-    }
     public void DestroyMatches()
     {
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                if (board[i, j] != null && board[i, j].isMatched)
+                Piece currentPiece = board[i,j];
+                if (currentPiece != null && currentPiece.isMatched)
                 {
-                    Destroy(board[i, j].gameObject);
+                    int pieceScore = baseScoreValue * scoreMultiplier;
+
+                    if(currentPiece.isHorizontalMatch && currentPiece.isVerticalMatch)
+                    {
+                        int bonusScore = 50 * scoreMultiplier; 
+                        pieceScore += bonusScore;
+                    }
+
+                    currentScore += pieceScore;
+
+                    Destroy(currentPiece.gameObject);
                     
                     board[i, j] = null;
                 }
             }
         }
+        UIManager.Instance.UpdateScore(currentScore);
     }
     private void ApplyGravity()
     {
@@ -146,7 +143,18 @@ public class BoardManager : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
         RefillBoard();
         yield return new WaitForSeconds(0.3f);
-        CheckForMatches();
+        
+        if(HasMatches())
+        {
+            scoreMultiplier++;
+
+            StartCoroutine(ProcessBoardRoutine());
+        }
+        else
+        {
+            if(movesLeft <= 0) currentState = GameState.GameOver;
+            else currentState = GameState.Move;
+        }
     }
 
     public IEnumerator CheckAndSwapBack(Piece p1, Piece p2)
@@ -157,7 +165,10 @@ public class BoardManager : MonoBehaviour
         if(HasMatches())
         {
             movesLeft--;
-            Debug.Log("Moves left: " + movesLeft);
+            UIManager.Instance.UpdateMoves(movesLeft);
+
+            scoreMultiplier = 1;
+            
             StartCoroutine(ProcessBoardRoutine());
         }
         else
@@ -173,6 +184,8 @@ public class BoardManager : MonoBehaviour
     }
     private bool HasMatches()
     {
+        bool matchFound = false;
+
         for(int i = 0; i < width; i++)
         {
             for(int j = 0; j < height; j++)
@@ -184,15 +197,23 @@ public class BoardManager : MonoBehaviour
                     {
                         Piece right1 = board[i+1, j];
                         Piece right2 = board[i+2, j];
-                        if(right1 != null && right2 != null)
+                        if(right1 != null && right2 != null && 
+                            right1.myPiece == currentPiece.myPiece && 
+                            right2.myPiece == currentPiece.myPiece)
                         {
-                            if(currentPiece.myPiece == right1.myPiece && currentPiece.myPiece == right2.myPiece)
+                            currentPiece.isMatched = true; currentPiece.isHorizontalMatch = true;
+                            right1.isMatched = true; right1.isHorizontalMatch = true;
+                            right2.isMatched = true; right2.isHorizontalMatch = true;
+
+                            int nextX = i + 3;
+                            
+                            while (nextX < width && board[nextX, j] != null && board[nextX, j].myPiece == currentPiece.myPiece)
                             {
-                                currentPiece.isMatched = true;
-                                right1.isMatched = true;
-                                right2.isMatched = true;
-                                return true;
+                                board[nextX, j].isMatched = true; board[nextX,j].isHorizontalMatch = true;
+                                nextX++;
                             }
+                            matchFound = true;
+                        
                         }
                     }
 
@@ -200,20 +221,27 @@ public class BoardManager : MonoBehaviour
                     {
                         Piece up1 = board[i, j+1];
                         Piece up2 = board[i, j+2];
-                        if(up1 != null && up2 != null)
+                        if(up1 != null && up2 != null && 
+                            up1.myPiece == currentPiece.myPiece && 
+                            up2.myPiece == currentPiece.myPiece)
                         {
-                            if(currentPiece.myPiece == up1.myPiece && currentPiece.myPiece == up2.myPiece)
+                            currentPiece.isMatched = true; currentPiece.isVerticalMatch = true;
+                            up1.isMatched = true; up1.isVerticalMatch = true;
+                            up2.isMatched = true; up2.isVerticalMatch = true;
+
+                            int nextY = j + 3;
+                            while (nextY < height && board[i, nextY] != null && board[i, nextY].myPiece == currentPiece.myPiece)
                             {
-                                currentPiece.isMatched = true;
-                                up1.isMatched = true;
-                                up2.isMatched = true;
-                                return true;
+                                board[i, nextY].isMatched = true; board[i, nextY].isVerticalMatch = true;
+                                nextY++;
                             }
+                            matchFound = true;
+                        
                         }
                     }
                 }
             }
         }
-        return false;
+        return matchFound;
     }
 }
